@@ -52,13 +52,14 @@ module MongoidColoredLogger
 
     # Used for Mongoid >= 3.0
     def colorize_message(message)
-      message = message.sub('MONGODB', color('MONGODB', odd? ? CYAN : MAGENTA)).
-        sub(%r{(?<=\[')([^']+)}) {|m| color(m, BLUE)}.
-        sub(%r{(?<=\]\.)\w+}) {|m| color(m, YELLOW)}
-      message.sub('MOPED:', color('MOPED:', odd? ? CYAN : MAGENTA)).
-        sub(/\{.+?\}\s/) { |m| color(m, BLUE) }.
-        sub(/COMMAND|QUERY|KILL_CURSORS|INSERT|DELETE|UPDATE|GET_MORE/) { |m| color(m, YELLOW) }.
-        sub(/[\d\.]+ms/) { |m| color(m, GREEN) }
+      odd_now = odd?
+      color(message, BLUE).
+        gsub(/\[?\{.+?\}\]?\s/) do |m|
+          m.gsub!(/=>/) {|m2| color(m2, MAGENTA) + "#{BOLD if odd_now}" + WHITE }
+          color(m, WHITE, odd_now)+BLUE
+        end.
+        gsub(/(?<=database=|collection=)[^\s]+/) {|m| color(m, CYAN, odd_now)+BLUE }.
+        sub(/COMMAND|QUERY|KILL_CURSORS|INSERT|DELETE|UPDATE|GET_MORE/) { |m| color(m, GREEN, true)+BLUE }
     end
 
     def odd?
